@@ -1,0 +1,105 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kitchen Sink — OpenAPI 3.1.0",
+    "version": "1.0.0",
+    "summary": "Exhaustive 3.1 spec for e2e.",
+    "description": "3.1-specific idioms: `type` arrays for nullability (`[\"string\",\"null\"]`), `const`, `examples` arrays, JSON Schema 2020-12 composition, plus the full param/body/security surface. Wired to the mock backend.",
+    "license": { "name": "MIT", "identifier": "MIT" }
+  },
+  "externalDocs": { "url": "https://example.com/docs" },
+  "servers": [
+    { "url": "http://localhost:4599", "description": "Mock backend" },
+    { "url": "http://{host}:4599", "variables": { "host": { "default": "localhost", "enum": ["localhost", "127.0.0.1"] } } }
+  ],
+  "tags": [{ "name": "echo" }, { "name": "bodies" }, { "name": "secure" }],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyHeader": { "type": "apiKey", "in": "header", "name": "X-API-Key" },
+      "BearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+      "OAuth2": { "type": "oauth2", "flows": { "clientCredentials": { "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read" } } } }
+    },
+    "schemas": {
+      "Node": {
+        "type": "object",
+        "properties": { "name": { "type": "string" }, "children": { "type": "array", "items": { "$ref": "#/components/schemas/Node" } } }
+      },
+      "Shape": {
+        "oneOf": [
+          { "type": "object", "properties": { "kind": { "const": "circle" }, "radius": { "type": "number" } } },
+          { "type": "object", "properties": { "kind": { "const": "square" }, "side": { "type": "number" } } }
+        ]
+      }
+    }
+  },
+  "security": [],
+  "paths": {
+    "/anything": {
+      "get": {
+        "operationId": "echoQuery31",
+        "tags": ["echo"],
+        "summary": "Query params incl. 3.1 nullable via type arrays",
+        "parameters": [
+          { "name": "str", "in": "query", "schema": { "type": "string", "examples": ["hello"] } },
+          { "name": "nickname", "in": "query", "schema": { "type": ["string", "null"] } },
+          { "name": "count", "in": "query", "schema": { "type": "integer", "minimum": 0, "default": 5 } },
+          { "name": "mode", "in": "query", "schema": { "type": "string", "enum": ["fast", "slow"] } },
+          { "name": "tags", "in": "query", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } }
+        ],
+        "responses": { "200": { "description": "echo", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "getUser31",
+        "tags": ["echo"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/json": {
+      "post": {
+        "operationId": "createShape",
+        "tags": ["bodies"],
+        "summary": "JSON body with oneOf/const + recursion",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "properties": { "shape": { "$ref": "#/components/schemas/Shape" }, "tree": { "$ref": "#/components/schemas/Node" }, "note": { "type": ["string", "null"] } } } } }
+        },
+        "responses": { "201": { "description": "created", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadFile31",
+        "tags": ["bodies"],
+        "summary": "multipart/form-data with a file",
+        "requestBody": { "required": true, "content": { "multipart/form-data": { "schema": { "type": "object", "required": ["file"], "properties": { "file": { "type": "string", "format": "binary" }, "caption": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/form": {
+      "post": {
+        "operationId": "submitForm31",
+        "tags": ["bodies"],
+        "summary": "urlencoded",
+        "requestBody": { "content": { "application/x-www-form-urlencoded": { "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "agree": { "type": "boolean" } } } } } },
+        "responses": { "200": { "description": "ok" } }
+      }
+    },
+    "/content/{kind}": {
+      "get": {
+        "operationId": "getContent31",
+        "tags": ["echo"],
+        "parameters": [{ "name": "kind", "in": "path", "required": true, "schema": { "type": "string", "enum": ["json", "text", "empty"] } }],
+        "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object" } } } }, "204": { "description": "empty" } }
+      }
+    },
+    "/secure/bearer": {
+      "get": { "operationId": "secureBearer31", "tags": ["secure"], "security": [{ "BearerAuth": [] }, { "OAuth2": ["read"] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    },
+    "/secure/apikey": {
+      "get": { "operationId": "secureApiKey31", "tags": ["secure"], "security": [{ "ApiKeyHeader": [] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    }
+  }
+}

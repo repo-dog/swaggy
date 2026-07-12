@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    // Shipped as TypeScript source (esbuild/vite consume it), so type-check only — no emit.
+    "noEmit": true
+  },
+  "include": ["src"]
+}

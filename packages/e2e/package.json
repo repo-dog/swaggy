@@ -1,0 +1,24 @@
+{
+  "name": "@swaggy/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end test fixtures for Swaggy: a mock upstream backend, kitchen-sink OpenAPI specs (2.0 / 3.0 / 3.1), and integration (Vitest) + browser (Playwright) suites. Never shipped in the production build or Docker image.",
+  "scripts": {
+    "e2e": "vitest run",
+    "e2e:ui": "playwright test",
+    "serve": "tsx src/serve.ts"
+  },
+  "devDependencies": {
+    "@fastify/formbody": "^7.4.0",
+    "@fastify/multipart": "^8.3.1",
+    "@playwright/test": "^1.48.0",
+    "@swaggy/server": "workspace:*",
+    "@swaggy/shared": "workspace:*",
+    "@types/node": "^20.19.43",
+    "fastify": "^4.28.0",
+    "tsx": "^4.19.0",
+    "undici": "^6.19.0",
+    "vitest": "^2.1.9"
+  }
+}

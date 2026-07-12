@@ -1,0 +1,10 @@
+{
+  "refreshIntervalMs": 300000,
+  "proxyTimeoutMs": 30000,
+  "specs": [
+    { "name": "swagger-2.0", "url": "./test-specs/swagger-2.0.json" },
+    { "name": "openapi-3.0", "url": "./test-specs/openapi-3.0.json" },
+    { "name": "openapi-3.1", "url": "./test-specs/openapi-3.1.json" },
+    { "name": "edge-cases", "url": "./test-specs/edge-cases-3.0.json" }
+  ]
+}

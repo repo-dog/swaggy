@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.superpowers/
+coverage/
+*.tsbuildinfo
+
+# Local, environment-specific spec config (may contain private/internal URLs).
+# Ship specs.config.example.json instead; users copy it to specs.config.json.
+/specs.config.json
+
+# Local scratch + AI assistant working files (not part of the published project).
+.claude/
+packages/e2e/test-results/.last-run.json

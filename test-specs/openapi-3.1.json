@@ -1,0 +1,111 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Test API — OpenAPI 3.1.0",
+    "version": "3.0.0",
+    "summary": "3.1 / JSON Schema 2020-12 features.",
+    "description": "Exercises OpenAPI 3.1 features: JSON Schema 2020-12 (type arrays incl. null, const, prefixItems/tuples, examples arrays), webhooks, and pathItem-level servers."
+  },
+  "servers": [{ "url": "https://api.example.com/v3" }],
+  "tags": [
+    { "name": "events", "description": "Event ingestion" },
+    { "name": "geo", "description": "Geospatial" }
+  ],
+  "paths": {
+    "/events": {
+      "post": {
+        "tags": ["events"],
+        "summary": "Ingest an event",
+        "operationId": "ingestEvent",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } }
+        },
+        "responses": {
+          "202": { "description": "Accepted" },
+          "400": { "description": "Bad request", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Problem" } } } }
+        }
+      }
+    },
+    "/geo/points": {
+      "get": {
+        "tags": ["geo"],
+        "summary": "List points",
+        "operationId": "listPoints",
+        "parameters": [
+          { "name": "bbox", "in": "query", "description": "Bounding box tuple [minLon, minLat, maxLon, maxLat].", "schema": { "$ref": "#/components/schemas/BBox" } },
+          { "name": "kind", "in": "query", "schema": { "type": "string", "enum": ["poi", "address", "region"] } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Point" } } } } }
+        }
+      }
+    }
+  },
+  "webhooks": {
+    "eventProcessed": {
+      "post": {
+        "summary": "Fired when an event finishes processing",
+        "operationId": "eventProcessedWebhook",
+        "requestBody": {
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Event" } } }
+        },
+        "responses": { "200": { "description": "Acknowledged" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    },
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "examples": ["user.created", "order.placed"] },
+          "schemaVersion": { "const": "2020-12", "description": "Fixed schema version." },
+          "note": { "type": ["string", "null"], "description": "Nullable via a 3.1 type array." },
+          "priority": { "type": "integer", "minimum": 0, "maximum": 9, "default": 0 },
+          "payload": { "type": "object", "additionalProperties": true }
+        },
+        "examples": [
+          { "id": "5b9b…", "type": "user.created", "schemaVersion": "2020-12", "priority": 1 }
+        ]
+      },
+      "BBox": {
+        "type": "array",
+        "description": "A 4-tuple bounding box (2020-12 prefixItems).",
+        "prefixItems": [
+          { "type": "number", "description": "minLon" },
+          { "type": "number", "description": "minLat" },
+          { "type": "number", "description": "maxLon" },
+          { "type": "number", "description": "maxLat" }
+        ],
+        "minItems": 4,
+        "maxItems": 4,
+        "items": false
+      },
+      "Point": {
+        "type": "object",
+        "required": ["lon", "lat"],
+        "properties": {
+          "lon": { "type": "number" },
+          "lat": { "type": "number" },
+          "kind": { "type": "string", "enum": ["poi", "address", "region"] },
+          "label": { "type": ["string", "null"] }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "format": "uri" },
+          "title": { "type": "string" },
+          "status": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

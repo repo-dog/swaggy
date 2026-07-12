@@ -1,0 +1,193 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Kitchen Sink — OpenAPI 3.0.3",
+    "version": "1.0.0",
+    "description": "Exhaustive 3.0 spec for e2e: every param location, data type/format, enum, default, nullable, composition (oneOf/anyOf/allOf), $ref + recursion, all security schemes, multi-server + variables, json/multipart/urlencoded bodies, and varied responses. Wired to the mock backend.",
+    "contact": { "name": "Swaggy", "url": "https://example.com" },
+    "license": { "name": "MIT" }
+  },
+  "externalDocs": { "url": "https://example.com/docs", "description": "More docs" },
+  "servers": [
+    { "url": "http://localhost:4599", "description": "Mock backend" },
+    { "url": "http://{host}:4599", "description": "Templated", "variables": { "host": { "default": "localhost", "enum": ["localhost", "127.0.0.1"] } } }
+  ],
+  "tags": [
+    { "name": "echo", "description": "Reflects the request back" },
+    { "name": "bodies", "description": "Request body shapes" },
+    { "name": "secure", "description": "Auth-protected" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyHeader": { "type": "apiKey", "in": "header", "name": "X-API-Key" },
+      "ApiKeyQuery": { "type": "apiKey", "in": "query", "name": "api_key" },
+      "BasicAuth": { "type": "http", "scheme": "basic" },
+      "BearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": { "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read", "write": "Write" } },
+          "password": { "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read" } },
+          "authorizationCode": { "authorizationUrl": "http://localhost:4599/oauth/authorize", "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read", "write": "Write" } },
+          "implicit": { "authorizationUrl": "http://localhost:4599/oauth/authorize", "scopes": { "read": "Read" } }
+        }
+      },
+      "OpenId": { "type": "openIdConnect", "openIdConnectUrl": "http://localhost:4599/.well-known/openid-configuration" }
+    },
+    "schemas": {
+      "Node": {
+        "type": "object",
+        "description": "Recursive tree node (self-referential $ref).",
+        "properties": { "name": { "type": "string" }, "children": { "type": "array", "items": { "$ref": "#/components/schemas/Node" } } }
+      },
+      "Animal": {
+        "type": "object",
+        "required": ["kind"],
+        "properties": { "kind": { "type": "string", "enum": ["cat", "dog"] }, "name": { "type": "string" } }
+      },
+      "Cat": { "allOf": [{ "$ref": "#/components/schemas/Animal" }, { "type": "object", "properties": { "purrs": { "type": "boolean" } } }] },
+      "Dog": { "allOf": [{ "$ref": "#/components/schemas/Animal" }, { "type": "object", "properties": { "barks": { "type": "boolean" } } }] },
+      "Pet": { "oneOf": [{ "$ref": "#/components/schemas/Cat" }, { "$ref": "#/components/schemas/Dog" }] }
+    }
+  },
+  "security": [],
+  "paths": {
+    "/anything": {
+      "get": {
+        "operationId": "echoQuery",
+        "tags": ["echo"],
+        "summary": "Echo with every query param flavor",
+        "description": "Exercises **string/number/integer/boolean/array/enum** query params with formats, defaults and constraints.",
+        "parameters": [
+          { "name": "str", "in": "query", "schema": { "type": "string", "minLength": 1, "maxLength": 50 } },
+          { "name": "when", "in": "query", "schema": { "type": "string", "format": "date-time" } },
+          { "name": "count", "in": "query", "schema": { "type": "integer", "format": "int32", "minimum": 0, "maximum": 100, "default": 10 } },
+          { "name": "ratio", "in": "query", "schema": { "type": "number", "format": "double" } },
+          { "name": "active", "in": "query", "schema": { "type": "boolean", "default": true } },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["open", "closed", "pending"] } },
+          { "name": "tags", "in": "query", "style": "form", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "nickname", "in": "query", "schema": { "type": "string", "nullable": true } },
+          { "name": "X-Trace", "in": "header", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "echo", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      },
+      "post": {
+        "operationId": "echoAnything",
+        "tags": ["echo"],
+        "summary": "Deprecated echo",
+        "deprecated": true,
+        "responses": { "200": { "description": "echo" } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "getUser",
+        "tags": ["echo"],
+        "summary": "Path + cookie params",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "session", "in": "cookie", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "the user", "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" } } } } } }, "404": { "description": "not found" } }
+      }
+    },
+    "/json": {
+      "post": {
+        "operationId": "createPet",
+        "tags": ["bodies"],
+        "summary": "JSON body with oneOf + recursion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["pet"],
+                "properties": {
+                  "pet": { "$ref": "#/components/schemas/Pet" },
+                  "tree": { "$ref": "#/components/schemas/Node" },
+                  "labels": { "type": "array", "items": { "type": "string" } },
+                  "priority": { "type": "integer", "enum": [1, 2, 3], "default": 2 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "created", "headers": { "Location": { "schema": { "type": "string" } } }, "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadFile",
+        "tags": ["bodies"],
+        "summary": "multipart/form-data with a file",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary", "description": "The file to upload" },
+                  "caption": { "type": "string" },
+                  "tags": { "type": "array", "items": { "type": "string", "format": "binary" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "upload report", "content": { "application/json": { "schema": { "type": "object" } } } } }
+      }
+    },
+    "/form": {
+      "post": {
+        "operationId": "submitForm",
+        "tags": ["bodies"],
+        "summary": "application/x-www-form-urlencoded",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string" }, "email": { "type": "string", "format": "email" }, "agree": { "type": "boolean" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "form echo" } }
+      }
+    },
+    "/content/{kind}": {
+      "get": {
+        "operationId": "getContent",
+        "tags": ["echo"],
+        "summary": "Varied response content types",
+        "parameters": [{ "name": "kind", "in": "path", "required": true, "schema": { "type": "string", "enum": ["json", "problem", "xml", "text", "html", "empty"] } }],
+        "responses": {
+          "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "object" } }, "application/xml": {}, "text/plain": {} } },
+          "204": { "description": "empty" },
+          "418": { "description": "teapot", "content": { "application/problem+json": { "schema": { "type": "object" } } } }
+        }
+      }
+    },
+    "/status/{code}": {
+      "get": {
+        "operationId": "getStatus",
+        "tags": ["echo"],
+        "summary": "Return a chosen status code",
+        "parameters": [{ "name": "code", "in": "path", "required": true, "schema": { "type": "integer", "minimum": 100, "maximum": 599 } }],
+        "responses": { "default": { "description": "the status" } }
+      }
+    },
+    "/redirect": {
+      "get": { "operationId": "getRedirect", "tags": ["echo"], "summary": "302 with a Location header", "responses": { "302": { "description": "redirect", "headers": { "Location": { "schema": { "type": "string" } } } } } }
+    },
+    "/secure/apikey": {
+      "get": { "operationId": "secureApiKey", "tags": ["secure"], "summary": "apiKey (header OR query)", "security": [{ "ApiKeyHeader": [] }, { "ApiKeyQuery": [] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    },
+    "/secure/bearer": {
+      "get": { "operationId": "secureBearer", "tags": ["secure"], "summary": "http bearer + oauth2", "security": [{ "BearerAuth": [] }, { "OAuth2": ["read"] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    },
+    "/secure/basic": {
+      "get": { "operationId": "secureBasic", "tags": ["secure"], "summary": "http basic", "security": [{ "BasicAuth": [] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    }
+  }
+}

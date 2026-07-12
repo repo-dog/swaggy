@@ -1,0 +1,21 @@
+# Installed/built artifacts are recreated inside the image — never copy host copies in
+# (wrong arch, stale, and huge build context).
+node_modules
+**/node_modules
+packages/*/dist
+packages/web/dist
+
+# Repo cruft not needed to build or run the tool.
+.git
+.gitignore
+*.log
+docs
+draft-0.md
+Dockerfile
+.dockerignore
+.claude
+.github
+# Repo-only e2e fixtures (mock backend, kitchen-sink specs, Playwright) — never in the image.
+packages/e2e
+# The local spec config may hold private URLs; the image ships specs.config.example.json.
+specs.config.json

@@ -1,0 +1,121 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Kitchen Sink — Swagger 2.0",
+    "version": "1.0.0",
+    "description": "Exhaustive 2.0 spec for e2e: host/basePath/schemes, consumes/produces, body + formData params, file upload, collectionFormat arrays, allOf + recursive $ref definitions, and apiKey/basic/oauth2 securityDefinitions. Wired to the mock backend."
+  },
+  "externalDocs": { "url": "https://example.com/docs", "description": "More docs" },
+  "host": "localhost:4599",
+  "basePath": "/",
+  "schemes": ["http"],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "tags": [{ "name": "echo" }, { "name": "bodies" }, { "name": "secure" }],
+  "securityDefinitions": {
+    "ApiKeyHeader": { "type": "apiKey", "in": "header", "name": "X-API-Key" },
+    "ApiKeyQuery": { "type": "apiKey", "in": "query", "name": "api_key" },
+    "BasicAuth": { "type": "basic" },
+    "OAuth2Implicit": { "type": "oauth2", "flow": "implicit", "authorizationUrl": "http://localhost:4599/oauth/authorize", "scopes": { "read": "Read" } },
+    "OAuth2Password": { "type": "oauth2", "flow": "password", "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read" } },
+    "OAuth2Application": { "type": "oauth2", "flow": "application", "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read", "write": "Write" } },
+    "OAuth2AccessCode": { "type": "oauth2", "flow": "accessCode", "authorizationUrl": "http://localhost:4599/oauth/authorize", "tokenUrl": "http://localhost:4599/oauth/token", "scopes": { "read": "Read" } }
+  },
+  "definitions": {
+    "Node": {
+      "type": "object",
+      "properties": { "name": { "type": "string" }, "children": { "type": "array", "items": { "$ref": "#/definitions/Node" } } }
+    },
+    "Animal": { "type": "object", "required": ["kind"], "properties": { "kind": { "type": "string", "enum": ["cat", "dog"] }, "name": { "type": "string" } } },
+    "Cat": { "allOf": [{ "$ref": "#/definitions/Animal" }, { "type": "object", "properties": { "purrs": { "type": "boolean" } } }] }
+  },
+  "paths": {
+    "/anything": {
+      "get": {
+        "operationId": "echoQuery2",
+        "tags": ["echo"],
+        "summary": "Query params with 2.0 types + collectionFormat arrays",
+        "parameters": [
+          { "name": "str", "in": "query", "type": "string", "minLength": 1 },
+          { "name": "count", "in": "query", "type": "integer", "format": "int64", "default": 3 },
+          { "name": "ratio", "in": "query", "type": "number", "format": "float" },
+          { "name": "active", "in": "query", "type": "boolean" },
+          { "name": "status", "in": "query", "type": "string", "enum": ["open", "closed"] },
+          { "name": "tags", "in": "query", "type": "array", "collectionFormat": "multi", "items": { "type": "string" } },
+          { "name": "X-Trace", "in": "header", "type": "string" }
+        ],
+        "responses": { "200": { "description": "echo", "schema": { "type": "object" } } }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "getUser2",
+        "tags": ["echo"],
+        "summary": "Path param",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "ok", "schema": { "type": "object" } }, "404": { "description": "not found" } }
+      }
+    },
+    "/json": {
+      "post": {
+        "operationId": "createPet2",
+        "tags": ["bodies"],
+        "summary": "JSON body param (in: body) with allOf + recursion",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["cat"],
+              "properties": { "cat": { "$ref": "#/definitions/Cat" }, "tree": { "$ref": "#/definitions/Node" }, "labels": { "type": "array", "items": { "type": "string" } } }
+            }
+          }
+        ],
+        "responses": { "201": { "description": "created", "headers": { "Location": { "type": "string" } }, "schema": { "type": "object" } } }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadFile2",
+        "tags": ["bodies"],
+        "summary": "multipart/form-data via formData params (type: file)",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          { "name": "file", "in": "formData", "type": "file", "required": true, "description": "The file to upload" },
+          { "name": "caption", "in": "formData", "type": "string" }
+        ],
+        "responses": { "200": { "description": "upload report", "schema": { "type": "object" } } }
+      }
+    },
+    "/form": {
+      "post": {
+        "operationId": "submitForm2",
+        "tags": ["bodies"],
+        "summary": "application/x-www-form-urlencoded via formData params",
+        "consumes": ["application/x-www-form-urlencoded"],
+        "parameters": [
+          { "name": "name", "in": "formData", "type": "string", "required": true },
+          { "name": "agree", "in": "formData", "type": "boolean" }
+        ],
+        "responses": { "200": { "description": "ok" } }
+      }
+    },
+    "/status/{code}": {
+      "get": {
+        "operationId": "getStatus2",
+        "tags": ["echo"],
+        "summary": "Return a chosen status",
+        "parameters": [{ "name": "code", "in": "path", "required": true, "type": "integer" }],
+        "responses": { "200": { "description": "ok" } }
+      }
+    },
+    "/secure/apikey": {
+      "get": { "operationId": "secureApiKey2", "tags": ["secure"], "summary": "apiKey", "security": [{ "ApiKeyHeader": [] }, { "ApiKeyQuery": [] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    },
+    "/secure/basic": {
+      "get": { "operationId": "secureBasic2", "tags": ["secure"], "summary": "basic auth", "security": [{ "BasicAuth": [] }], "responses": { "200": { "description": "ok" }, "401": { "description": "unauthorized" } } }
+    }
+  }
+}

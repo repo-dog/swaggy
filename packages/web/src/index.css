@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+ * COLOR TOKENS — the single source of truth for the palette.
+ *
+ * Each token is an RGB triple (space-separated, no `rgb()`) so Tailwind's
+ * `/<opacity>` utilities keep working (e.g. `bg-accent/15`). Light values live
+ * in :root; `.dark` overrides them. To retheme the app — light or dark — edit
+ * the values here, not the components. Tailwind maps these to semantic color
+ * names (canvas, surface, content, line, accent, danger, warning, success,
+ * method-*) in tailwind.config.ts.
+ *
+ * Intentional exceptions that keep their own palettes (not themed via these
+ * tokens): the always-dark JSON/code viewer (JsonView.tsx, jsonEditorTheme.ts),
+ * the decorative per-section hue generator (sectionColor.ts), and the bookmark /
+ * search-highlight gold (amber).
+ * ==========================================================================*/
+:root {
+  --canvas: 242 242 247; /* page background — systemGray6 */
+  --surface: 255 255 255; /* cards, inputs, popovers */
+  --surface-muted: 226 232 240; /* hover fills / secondary chips (slate-200) */
+  --surface-code: 15 23 42; /* JSON / code viewer — dark in both themes (slate-900) */
+
+  --content: 15 23 42; /* primary text (slate-900) */
+  --content-secondary: 51 65 85; /* labels / body (slate-700) */
+  --content-muted: 100 116 139; /* hints / captions (slate-500) */
+  --content-faint: 148 163 184; /* placeholders / disabled (slate-400) */
+  --content-inverse: 241 245 249; /* text on code / accent surfaces (slate-100) */
+
+  --line: 203 213 225; /* borders (slate-300) */
+  --line-strong: 148 163 184; /* focus / hover borders (slate-400) */
+
+  --accent: 0 113 227; /* blue */
+  --accent-strong: 0 99 200; /* accent hover */
+  --accent-subtle: 238 245 253; /* selection tint */
+  --accent-contrast: 255 255 255; /* text/icon on an accent fill */
+
+  --danger: 220 38 38; /* red-600 */
+  --danger-strong: 185 28 28; /* red-700 */
+  --danger-subtle: 254 242 242; /* red-50 background */
+  --warning: 180 83 9; /* amber-700 */
+  --warning-subtle: 255 251 235; /* amber-50 background */
+  --success: 5 150 105; /* emerald-600 */
+
+  --method-get: 2 132 199; /* sky-600 */
+  --method-post: 5 150 105; /* emerald-600 */
+  --method-put: 217 119 6; /* amber-600 */
+  --method-patch: 124 58 237; /* violet-600 */
+  --method-delete: 220 38 38; /* red-600 */
+}
+
+.dark {
+  color-scheme: dark;
+  --canvas: 15 23 42; /* slate-900 */
+  --surface: 30 41 59; /* slate-800 */
+  --surface-muted: 30 41 59; /* slate-800 */
+  --surface-code: 2 6 23; /* slate-950 */
+
+  --content: 241 245 249; /* slate-100 */
+  --content-secondary: 226 232 240; /* slate-200 */
+  --content-muted: 148 163 184; /* slate-400 */
+  --content-faint: 100 116 139; /* slate-500 */
+  --content-inverse: 241 245 249;
+
+  --line: 51 65 85; /* slate-700 */
+  --line-strong: 71 85 105; /* slate-600 */
+
+  --accent: 10 132 255; /* systemBlue (dark) */
+  --accent-strong: 56 152 255;
+  --accent-subtle: 30 58 95; /* deep blue selection tint */
+  --accent-contrast: 255 255 255;
+
+  --danger: 239 68 68; /* red-500 — works as fill and text on dark */
+  --danger-strong: 248 113 113; /* red-400 — emphasis text / fill hover */
+  --danger-subtle: 40 12 12; /* deep red background */
+  --warning: 251 191 36; /* amber-400 */
+  --warning-subtle: 41 24 3; /* deep amber background */
+  --success: 52 211 153; /* emerald-400 */
+
+  --method-get: 56 189 248; /* sky-400 */
+  --method-post: 52 211 153; /* emerald-400 */
+  --method-put: 251 191 36; /* amber-400 */
+  --method-patch: 167 139 250; /* violet-400 */
+  --method-delete: 248 113 113; /* red-400 */
+}
+
+/* Page background behind the app shell (covers overscroll), driven by the token. */
+html { background: rgb(var(--canvas)); }

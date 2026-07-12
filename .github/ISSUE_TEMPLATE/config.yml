@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/repo-dog/swaggy/security/advisories/new
+    about: Please report security issues privately — do not open a public issue.
+  - name: Question or discussion
+    url: https://github.com/repo-dog/swaggy/issues
+    about: For usage questions, search existing issues first, then open one describing what you're trying to do.

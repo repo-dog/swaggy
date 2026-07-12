@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 140" width="520" height="140" role="img" aria-label="Swaggy — a fast UI for your OpenAPI specs">
+  <defs>
+    <linearGradient id="swaggy-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a84ff"/>
+      <stop offset="1" stop-color="#0057c7"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <g transform="translate(16,22)">
+    <rect width="96" height="96" rx="22" fill="url(#swaggy-bg)"/>
+    <g transform="rotate(20 48 48)">
+      <polygon points="48,19 58,48 48,44 38,48" fill="#ffffff"/>
+      <polygon points="48,77 58,48 48,52 38,48" fill="#ffffff" opacity="0.55"/>
+      <circle cx="48" cy="48" r="4.8" fill="#0057c7"/>
+      <circle cx="48" cy="48" r="2.2" fill="#ffffff"/>
+    </g>
+  </g>
+  <!-- Wordmark (accent blue reads on both light and dark READMEs) -->
+  <text x="130" y="74" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="58" font-weight="800" fill="#0071e3">Swaggy</text>
+  <text x="132" y="104" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="19" font-weight="500" fill="#64748b">A fast UI for your OpenAPI specs</text>
+</svg>

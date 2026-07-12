@@ -1,0 +1,200 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Test API — OpenAPI 3.0.3",
+    "version": "2.0.0",
+    "description": "Exercises OpenAPI 3.0 features: servers, components/schemas, path/query/header/cookie params, JSON + urlencoded + multipart request bodies, oneOf/anyOf/allOf, nullable, enums, and http/apiKey/oauth2 security schemes."
+  },
+  "servers": [
+    { "url": "https://api.example.com/v2", "description": "Production" },
+    { "url": "https://staging.example.com/v2", "description": "Staging" }
+  ],
+  "tags": [
+    { "name": "orders", "description": "Order lifecycle" },
+    { "name": "payments", "description": "Payment methods" }
+  ],
+  "paths": {
+    "/orders": {
+      "get": {
+        "tags": ["orders"],
+        "summary": "List orders",
+        "operationId": "listOrders",
+        "parameters": [
+          { "name": "state", "in": "query", "schema": { "type": "string", "enum": ["draft", "placed", "shipped", "cancelled"] }, "description": "Filter by order state." },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 } },
+          { "name": "tags", "in": "query", "style": "form", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } },
+          { "name": "X-Tenant", "in": "header", "required": true, "schema": { "type": "string" } },
+          { "name": "session", "in": "cookie", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } } } } }
+        }
+      },
+      "post": {
+        "tags": ["orders"],
+        "summary": "Create an order",
+        "operationId": "createOrder",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/NewOrder" } }
+          }
+        },
+        "responses": {
+          "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "422": { "description": "Unprocessable", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/orders/{orderId}": {
+      "parameters": [{ "name": "orderId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+      "get": {
+        "tags": ["orders"],
+        "summary": "Get an order",
+        "operationId": "getOrder",
+        "responses": {
+          "200": { "description": "OK", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Order" } } } },
+          "404": { "description": "Not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/payments": {
+      "post": {
+        "tags": ["payments"],
+        "summary": "Add a payment method (polymorphic body)",
+        "operationId": "addPayment",
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/PaymentMethod" } },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": ["kind"],
+                "properties": {
+                  "kind": { "type": "string", "enum": ["card", "bank"] },
+                  "token": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaymentMethod" } } } } }
+      }
+    },
+    "/uploads": {
+      "post": {
+        "tags": ["orders"],
+        "summary": "Attach a document (multipart)",
+        "operationId": "attachDocument",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "orderId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "202": { "description": "Accepted" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" },
+      "apiKey": { "type": "apiKey", "name": "X-API-Key", "in": "header" },
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://api.example.com/oauth/authorize",
+            "tokenUrl": "https://api.example.com/oauth/token",
+            "scopes": { "orders:read": "Read orders", "orders:write": "Write orders" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Money": {
+        "type": "object",
+        "required": ["amount", "currency"],
+        "properties": {
+          "amount": { "type": "integer", "description": "Minor units (cents)." },
+          "currency": { "type": "string", "enum": ["USD", "EUR", "GBP"] }
+        }
+      },
+      "LineItem": {
+        "type": "object",
+        "required": ["sku", "quantity"],
+        "properties": {
+          "sku": { "type": "string" },
+          "quantity": { "type": "integer", "minimum": 1 },
+          "price": { "$ref": "#/components/schemas/Money" }
+        }
+      },
+      "NewOrder": {
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/components/schemas/LineItem" } },
+          "note": { "type": "string", "nullable": true },
+          "priority": { "type": "string", "enum": ["low", "normal", "high"], "default": "normal" }
+        }
+      },
+      "Order": {
+        "allOf": [
+          { "$ref": "#/components/schemas/NewOrder" },
+          {
+            "type": "object",
+            "required": ["id", "state"],
+            "properties": {
+              "id": { "type": "string", "format": "uuid" },
+              "state": { "type": "string", "enum": ["draft", "placed", "shipped", "cancelled"] },
+              "total": { "$ref": "#/components/schemas/Money" }
+            }
+          }
+        ]
+      },
+      "CardPayment": {
+        "type": "object",
+        "required": ["kind", "last4"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["card"] },
+          "last4": { "type": "string", "minLength": 4, "maxLength": 4 },
+          "brand": { "type": "string", "enum": ["visa", "mastercard", "amex"] }
+        }
+      },
+      "BankPayment": {
+        "type": "object",
+        "required": ["kind", "iban"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["bank"] },
+          "iban": { "type": "string" }
+        }
+      },
+      "PaymentMethod": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/CardPayment" },
+          { "$ref": "#/components/schemas/BankPayment" }
+        ],
+        "discriminator": { "propertyName": "kind" }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "details": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

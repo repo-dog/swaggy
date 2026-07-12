@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Authorizing…</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body style="font: 14px system-ui, sans-serif; padding: 2rem; color: #1d1d1f">
+    <p id="msg">Completing authorization…</p>
+    <script>
+      // OAuth2 redirect landing page. Parses the code/token from the query (authorization
+      // code) or hash (implicit) and posts it back to the app window that opened this popup,
+      // then closes. Kept dependency-free so it works before any bundle loads.
+      (function () {
+        function parse(str) {
+          var out = {};
+          (str || "").replace(/^[?#]/, "").split("&").forEach(function (kv) {
+            if (!kv) return;
+            var i = kv.indexOf("=");
+            var k = decodeURIComponent(i < 0 ? kv : kv.slice(0, i));
+            var v = i < 0 ? "" : decodeURIComponent(kv.slice(i + 1).replace(/\+/g, " "));
+            out[k] = v;
+          });
+          return out;
+        }
+        var q = parse(location.search);
+        var h = parse(location.hash);
+        var msg = {
+          source: "swaggy-oauth",
+          code: q.code,
+          state: q.state || h.state,
+          error: q.error || h.error,
+          error_description: q.error_description || h.error_description,
+          access_token: h.access_token,
+          token_type: h.token_type,
+          expires_in: h.expires_in,
+        };
+        try {
+          if (window.opener) window.opener.postMessage(msg, location.origin);
+          document.getElementById("msg").textContent = "Authorization complete — you can close this window.";
+        } catch (e) {
+          document.getElementById("msg").textContent = "Authorization complete.";
+        }
+        setTimeout(function () { try { window.close(); } catch (e) {} }, 300);
+      })();
+    </script>
+  </body>
+</html>

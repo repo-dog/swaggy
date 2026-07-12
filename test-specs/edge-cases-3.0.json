@@ -1,0 +1,105 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Test API — Edge Cases",
+    "version": "1.0.0",
+    "description": "Stress cases for rendering: a recursive (self-referencing) schema, anyOf composition, deep nesting, a large enum, free-form additionalProperties, and arrays of arrays."
+  },
+  "servers": [{ "url": "https://api.example.com/edge" }],
+  "tags": [{ "name": "trees" }, { "name": "misc" }],
+  "paths": {
+    "/trees": {
+      "post": {
+        "tags": ["trees"],
+        "summary": "Create a recursive tree",
+        "operationId": "createTree",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TreeNode" } } }
+        },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TreeNode" } } } } }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": ["misc"],
+        "summary": "Search with a large enum facet",
+        "operationId": "search",
+        "parameters": [
+          { "name": "country", "in": "query", "schema": { "type": "string", "enum": ["AD", "AE", "AF", "AG", "AL", "AM", "AO", "AR", "AT", "AU", "BE", "BR", "CA", "CH", "CN", "DE", "DK", "ES", "FI", "FR", "GB", "IN", "IT", "JP", "US"] }, "description": "25-value enum to test dropdown/hint truncation." }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/blobs": {
+      "post": {
+        "tags": ["misc"],
+        "summary": "Store a free-form blob + a polymorphic field",
+        "operationId": "storeBlob",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "metadata": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Free-form string map." },
+                  "matrix": { "type": "array", "items": { "type": "array", "items": { "type": "number" } }, "description": "Array of arrays." },
+                  "value": { "$ref": "#/components/schemas/Scalar" },
+                  "deep": { "$ref": "#/components/schemas/DeepNest" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Created" } }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TreeNode": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "number" },
+          "children": {
+            "type": "array",
+            "description": "Recursive: each child is another TreeNode.",
+            "items": { "$ref": "#/components/schemas/TreeNode" }
+          }
+        }
+      },
+      "Scalar": {
+        "description": "A value that may be a string, number, or boolean.",
+        "anyOf": [
+          { "type": "string" },
+          { "type": "number" },
+          { "type": "boolean" }
+        ]
+      },
+      "DeepNest": {
+        "type": "object",
+        "properties": {
+          "level1": {
+            "type": "object",
+            "properties": {
+              "level2": {
+                "type": "object",
+                "properties": {
+                  "level3": {
+                    "type": "object",
+                    "properties": {
+                      "level4": { "type": "string", "description": "Four levels deep." }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
