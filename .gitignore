@@ -12,4 +12,5 @@ coverage/
 
 # Local scratch + AI assistant working files (not part of the published project).
 .claude/
+docs/superpowers/
 packages/e2e/test-results/.last-run.json
