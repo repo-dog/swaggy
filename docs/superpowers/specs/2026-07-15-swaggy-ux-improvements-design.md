@@ -4,7 +4,7 @@
 
 ## Overview
 
-Six related improvements to the Swaggy UI: a global Simple/Advanced mode toggle, human-friendly Simple mode presentation, a persistent sidebar search, a Settings panel, and two JSON response viewer fixes (alignment and filter behavior).
+Seven related improvements to the Swaggy UI: a global Simple/Advanced mode toggle, human-friendly Simple mode presentation, a persistent sidebar search, a Settings panel, two JSON response viewer fixes (alignment and filter behavior), and proper rendering of HTML-in-markdown operation descriptions.
 
 ---
 
@@ -125,6 +125,24 @@ When a filter is active, matching text in key labels (the `label:` spans) is hig
 
 ---
 
+## 6. Markdown description rendering (HTML-in-markdown)
+
+**Problem:** OpenAPI descriptions often embed raw HTML (`<br/>`, `<a href="…">`) alongside markdown. `react-markdown` strips unrecognised HTML by default, so these render as plain text or disappear entirely.
+
+**Fix:** add two rehype plugins to `Markdown.tsx`:
+- `rehype-raw` — parses inline HTML nodes within the markdown AST
+- `rehype-sanitize` — allowlist-based sanitization that keeps safe tags (`<br>`, `<a>`, `<strong>`, `<em>`, `<code>`, `<pre>`, `<table>`, etc.) and strips dangerous ones (`<script>`, `<style>`, `onclick`, etc.)
+
+The existing custom `components` overrides (`a`, `code`, `ul`, etc.) still apply after parsing, so styled links and code blocks continue to work.
+
+**New dependencies** (in `packages/web`):
+- `rehype-raw`
+- `rehype-sanitize`
+
+**XSS posture:** `rehype-sanitize` with its default schema is equivalent to a strict allowlist. Specs are configured by the operator, not arbitrary end users, but sanitization ensures a malicious spec cannot inject scripts.
+
+---
+
 ## Files affected
 
 | File | Change |
@@ -143,3 +161,5 @@ When a filter is active, matching text in key labels (the `label:` spans) is hig
 | `features/response/JsonView.tsx` | Alignment spacer; object expansion fix; key highlight |
 | `lib/humanize.ts` | New utility: `humanizeLabel` |
 | `features/settings/SettingsDialog.tsx` | New component: Settings modal |
+| `features/common/Markdown.tsx` | Add `rehype-raw` + `rehype-sanitize` plugins |
+| `packages/web/package.json` | Add `rehype-raw`, `rehype-sanitize` dependencies |
