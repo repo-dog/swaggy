@@ -7,6 +7,7 @@ import { schemaHint, RequiredBadge } from "./fieldMeta.js";
 import { Markdown } from "../common/Markdown.js";
 import { useStore } from "../../store/store.js";
 import { cn } from "../../lib/cn.js";
+import { humanizeLabel } from "../../lib/humanize.js";
 
 function typeLabel(p: Param): string {
   const t = (p.schema as Record<string, unknown> | undefined)?.type as string | undefined;
@@ -35,10 +36,13 @@ function setOrDrop<V extends string | string[]>(map: Record<string, V>, name: st
 }
 
 function ParamLabel({ p, htmlFor }: { p: Param; htmlFor?: string }) {
+  const mode = useStore((s) => s.mode);
+  const simpleLabels = useStore((s) => s.simpleLabels);
+  const displayName = mode === "simple" && simpleLabels ? humanizeLabel(p.name) : p.name;
   return (
     <label htmlFor={htmlFor} className="pt-1.5 text-xs leading-tight">
       <span className="flex flex-wrap items-center gap-1.5">
-        <span className="font-medium text-content">{p.name}</span>
+        <span className="font-medium text-content">{displayName}</span>
         <RequiredBadge required={p.required} />
       </span>
       <span className="mt-0.5 block font-normal text-[11px] text-content-faint">{typeLabel(p)}</span>
@@ -264,7 +268,7 @@ export function ParamFields({ op, inputs, onChange }: { op: Operation; inputs: R
   const all = [...op.pathParams, ...op.queryParams, ...op.headerParams];
   if (all.length === 0) return null;
   return (
-    <div className="grid grid-cols-[minmax(7rem,10rem)_1fr] items-baseline gap-x-4 gap-y-4">
+    <div className="grid grid-cols-[minmax(7rem,10rem)_1fr] items-baseline gap-x-4 gap-y-density-field">
       {op.pathParams.map((p) => (
         <Row key={`p-${p.name}`} p={p} value={inputs.pathParams[p.name] ?? ""} onChange={(v) => onChange({ pathParams: setOrDrop(inputs.pathParams, p.name, v) })} />
       ))}

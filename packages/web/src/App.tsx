@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Moon, Sun, Monitor, Compass } from "lucide-react";
+import { Moon, Sun, Monitor, Compass, Settings } from "lucide-react";
+import { ModeToggle } from "./features/request/ModeToggle.js";
+import { SettingsDialog } from "./features/settings/SettingsDialog.js";
 import { OperationList } from "./features/operations/OperationList.js";
 import { RequestPanel } from "./features/request/RequestPanel.js";
 import { SidePanels } from "./features/request/SidePanels.js";
@@ -28,6 +30,7 @@ export default function App() {
   const setSelectedId = useStore((s) => s.setSelectedOperation);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [replaySeed, setReplaySeed] = useState<HistoryEntry | null>(null);
   const { data: ops = [] } = useOperations();
   const selected = ops.find((o) => o.id === selectedId) ?? null;
@@ -38,6 +41,7 @@ export default function App() {
   const setLastResponse = useStore((s) => s.setLastResponse);
   const theme = useStore((s) => s.theme);
   const toggleTheme = useStore((s) => s.toggleTheme);
+  const density = useStore((s) => s.density);
   const leftWidth = useStore((s) => s.leftSidebarWidth);
   const setLeftWidth = useStore((s) => s.setLeftSidebarWidth);
   const leftCollapsed = useStore((s) => s.leftSidebarCollapsed);
@@ -51,6 +55,14 @@ export default function App() {
     if (theme !== "system") return;
     return onSystemThemeChange(apply);
   }, [theme]);
+
+  useEffect(() => {
+    if (density === "comfortable") {
+      document.documentElement.dataset.density = "comfortable";
+    } else {
+      delete document.documentElement.dataset.density;
+    }
+  }, [density]);
 
   // --- Shareable URLs: keep the selected operation in the `?op=` query param ---
   // On mount, open whatever the URL points at (a shared link), or nothing — the selection
@@ -116,6 +128,7 @@ export default function App() {
       if (selected) toggleBookmark(selected.id);
     },
     cheatsheet: () => setShowHelp(true),
+    openSettings: () => setSettingsOpen(true),
   });
 
   return (
@@ -138,6 +151,7 @@ export default function App() {
             Search operations
             <kbd className="rounded border border-line bg-surface-muted px-1.5 py-0.5 font-mono text-xs text-content-secondary">⌘K</kbd>
           </button>
+          <ModeToggle mode={mode} onChange={setMode} />
           <ProfileSwitcher />
           {(() => {
             const ThemeIcon = THEME_ICON[theme];
@@ -158,6 +172,14 @@ export default function App() {
             aria-label="Keyboard shortcuts"
           >
             ?
+          </button>
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-md border border-line px-2 py-1 text-sm text-content-secondary hover:bg-surface-muted hover:text-content"
+            aria-label="Settings"
+            title="Settings (⌘,)"
+          >
+            <Settings className="h-4 w-4" />
           </button>
         </div>
       </header>
@@ -206,6 +228,7 @@ export default function App() {
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onSelect={setSelectedId} />
       <ShortcutsHelp open={showHelp} onClose={() => setShowHelp(false)} />
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

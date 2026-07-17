@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { AuthValue, CommonHeader, HistoryEntry, Mode, Profile, RequestInputs, Snapshot, StoredResponse, Theme } from "./store.types.js";
+import type { AuthValue, CommonHeader, Density, HistoryEntry, Mode, Profile, RequestInputs, Snapshot, StoredResponse, Theme } from "./store.types.js";
 import { nextTheme } from "../lib/theme.js";
 
 export const HISTORY_CAP = 200;
@@ -34,6 +34,7 @@ type State = {
   activeProfileId: string;
   mode: Mode;
   theme: Theme;
+  density: Density;
   serverChoiceBySpecId: Record<string, string>;
   // UI state persisted so a refresh restores where the user left off.
   selectedOperationId: string | null;
@@ -65,6 +66,8 @@ type State = {
   inputsByOperationId: Record<string, RequestInputs>;
   lastResponseByOperationId: Record<string, StoredResponse>;
   snapshotsByOperationId: Record<string, Snapshot[]>;
+  sidebarSearch: string;
+  simpleLabels: boolean;
 };
 
 type Actions = {
@@ -83,6 +86,7 @@ type Actions = {
   setMode: (mode: Mode) => void;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  setDensity: (d: Density) => void;
   setServerChoice: (specId: string, server: string) => void;
   setCommonHeaders: (headers: CommonHeader[]) => void;
   setAuthValue: (schemeKey: string, value: AuthValue) => void;
@@ -109,6 +113,8 @@ type Actions = {
   addSnapshot: (operationId: string, name: string, inputs: RequestInputs) => string;
   deleteSnapshot: (operationId: string, snapshotId: string) => void;
   renameSnapshot: (operationId: string, snapshotId: string, name: string) => void;
+  setSidebarSearch: (q: string) => void;
+  setSimpleLabels: (v: boolean) => void;
 };
 
 const initial: State = {
@@ -117,6 +123,7 @@ const initial: State = {
   activeProfileId: "default",
   mode: "advanced",
   theme: "system",
+  density: "compact",
   serverChoiceBySpecId: {},
   selectedOperationId: null,
   selectionCountsByOperationId: {},
@@ -135,6 +142,8 @@ const initial: State = {
   inputsByOperationId: {},
   lastResponseByOperationId: {},
   snapshotsByOperationId: {},
+  sidebarSearch: "",
+  simpleLabels: true,
 };
 
 function truncateBody(body: unknown): { body: unknown; truncated: boolean } {
@@ -245,6 +254,7 @@ export const useStore = create<State & Actions>()(
 
       setTheme: (theme) => set({ theme }),
       toggleTheme: () => set((st) => ({ theme: nextTheme(st.theme) })),
+      setDensity: (d) => set({ density: d }),
 
       setServerChoice: (specId, server) =>
         set((st) => ({ serverChoiceBySpecId: { ...st.serverChoiceBySpecId, [specId]: server } })),
@@ -316,6 +326,8 @@ export const useStore = create<State & Actions>()(
 
       setSidebarScrollTop: (top) => set({ sidebarScrollTop: top }),
       setBookmarksPinned: (pinned) => set({ bookmarksPinned: pinned }),
+      setSidebarSearch: (q) => set({ sidebarSearch: q }),
+      setSimpleLabels: (v) => set({ simpleLabels: v }),
 
       setLeftSidebarWidth: (width) => set({ leftSidebarWidth: width }),
       setRightSidebarWidth: (width) => set({ rightSidebarWidth: width }),

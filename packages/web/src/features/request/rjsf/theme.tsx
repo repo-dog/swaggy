@@ -10,6 +10,8 @@ import type {
 import { cn } from "../../../lib/cn.js";
 import { schemaHint, RequiredBadge } from "../fieldMeta.js";
 import { Markdown } from "../../common/Markdown.js";
+import { useStore } from "../../../store/store.js";
+import { humanizeLabel } from "../../../lib/humanize.js";
 
 // Gates whether field validation errors are *displayed*. Validation itself stays live (so
 // errors are always current, never stale), but we hide them until the user has edited the
@@ -45,15 +47,18 @@ export function BaseInputTemplate(props: BaseInputTemplateProps) {
 export function FieldTemplate(props: FieldTemplateProps) {
   const { id, label, children, rawErrors = [], rawDescription, required, hidden, displayLabel, schema } = props;
   const showErrors = useContext(ShowErrorsContext);
+  const mode = useStore((s) => s.mode);
+  const simpleLabels = useStore((s) => s.simpleLabels);
+  const displayedLabel = mode === "simple" && simpleLabels ? humanizeLabel(label) : label;
   if (hidden) return <div className="hidden">{children}</div>;
   // Enum choices / format / range hint, so allowed values are visible without opening the control.
   const hint = schemaHint(schema as Record<string, unknown>);
   return (
     <div className="flex flex-col gap-1 py-1.5">
-      {displayLabel && label ? (
+      {displayLabel && displayedLabel ? (
         <span className="flex flex-wrap items-center gap-1.5">
           <label htmlFor={id} className="text-xs font-medium text-content">
-            {label}
+            {displayedLabel}
           </label>
           <RequiredBadge required={required} />
         </span>
@@ -106,11 +111,14 @@ export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const { title, items, canAdd, onAddClick, required, schema } = props;
   const itemHint = schemaHint((schema as { items?: Record<string, unknown> } | undefined)?.items);
+  const mode = useStore((s) => s.mode);
+  const simpleLabels = useStore((s) => s.simpleLabels);
+  const displayedTitle = title && mode === "simple" && simpleLabels ? humanizeLabel(title) : title;
   return (
     <div className="flex flex-col gap-1.5">
-      {title ? (
+      {displayedTitle ? (
         <span className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs font-medium text-content">{title}</span>
+          <span className="text-xs font-medium text-content">{displayedTitle}</span>
           <RequiredBadge required={required} />
         </span>
       ) : null}
@@ -171,10 +179,13 @@ export function SelectWidget(props: WidgetProps) {
 
 export function CheckboxWidget(props: WidgetProps) {
   const { id, value, onChange, label } = props;
+  const mode = useStore((s) => s.mode);
+  const simpleLabels = useStore((s) => s.simpleLabels);
+  const displayedLabel = mode === "simple" && simpleLabels ? humanizeLabel(label) : label;
   return (
     <label htmlFor={id} className="inline-flex items-center gap-2 text-sm text-content-secondary">
       <input id={id} type="checkbox" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />
-      {label}
+      {displayedLabel}
     </label>
   );
 }

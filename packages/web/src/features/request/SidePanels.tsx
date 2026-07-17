@@ -67,13 +67,13 @@ function PanelCard({
         draggable
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
-        className="group flex items-center gap-1 px-1.5 py-1.5"
+        className="group flex items-center gap-1 px-1.5 py-density-row"
       >
         <GripVertical className="h-3.5 w-3.5 shrink-0 cursor-grab text-content-faint group-hover:text-content-muted" aria-label="Drag to reorder" />
         <button
           onClick={onToggle}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-1.5 text-left text-xs font-semibold uppercase tracking-wide text-content-secondary"
+          className="flex flex-1 items-center gap-1.5 text-left text-density-sm font-semibold uppercase tracking-wide text-content-secondary"
         >
           {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           {card.title}

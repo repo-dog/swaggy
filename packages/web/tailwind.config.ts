@@ -8,6 +8,16 @@ export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontSize: {
+        "density-primary":   "var(--density-fs-primary)",
+        "density-secondary": "var(--density-fs-secondary)",
+        "density-sm":        "var(--density-fs-sm)",
+      },
+      spacing: {
+        "density-row":   "var(--density-row-py)",
+        "density-body":  "var(--density-body-gap)",
+        "density-field": "var(--density-field-gap)",
+      },
       // Semantic color tokens backed by CSS variables (see src/index.css, the single source
       // of truth). Using `rgb(var(--x) / <alpha-value>)` keeps `/opacity` utilities working.
       colors: {

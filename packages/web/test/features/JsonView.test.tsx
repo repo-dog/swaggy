@@ -41,8 +41,9 @@ describe("JsonView", () => {
   it("filters the tree by key or value, hiding non-matches", async () => {
     render(<JsonView data={{ name: "alice", city: "paris" }} />);
     await userEvent.type(screen.getByLabelText(/filter response/i), "paris");
-    expect(screen.getByText("city:")).toBeInTheDocument();
-    expect(screen.queryByText("name:")).not.toBeInTheDocument();
+    // Key label is now highlighted — text may be split across spans; use a flexible matcher.
+    expect(screen.getByText((_, el) => el?.textContent === "city:")).toBeInTheDocument();
+    expect(screen.queryByText((_, el) => el?.textContent === "name:")).not.toBeInTheDocument();
   });
 
   it("keeps the filter bar sticky at the top of the scroll area", () => {

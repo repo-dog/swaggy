@@ -26,4 +26,9 @@ describe("resolveShortcut", () => {
     expect(resolveShortcut(ev({ key: "a", metaKey: true }), false)).toBeNull();
     expect(resolveShortcut(ev({ key: "k" }), false)).toBeNull();
   });
+
+  it("maps mod+, to openSettings", () => {
+    expect(resolveShortcut(ev({ key: ",", metaKey: true }), false)).toBe("openSettings");
+    expect(resolveShortcut(ev({ key: ",", ctrlKey: true }), false)).toBe("openSettings");
+  });
 });

@@ -3,7 +3,8 @@ export type ShortcutAction =
   | "toggleHistory"
   | "toggleMode"
   | "toggleBookmark"
-  | "cheatsheet";
+  | "cheatsheet"
+  | "openSettings";
 
 export type KeyEventLike = {
   key: string;
@@ -29,6 +30,7 @@ export function resolveShortcut(e: KeyEventLike, inEditable: boolean): ShortcutA
   if (mod && key === "\\") return "toggleMode";
   if (mod && key === "b") return "toggleBookmark";
   if (!mod && !inEditable && e.key === "?") return "cheatsheet";
+  if (mod && key === ",") return "openSettings";
 
   return null;
 }

@@ -7,7 +7,6 @@ import { initialInputsFor } from "./initialInputs.js";
 import type { RequestInputs } from "./buildProxyRequest.js";
 import type { HistoryEntry } from "../../store/store.types.js";
 import { ServerSelect } from "./ServerSelect.js";
-import { ModeToggle } from "./ModeToggle.js";
 import { ParamFields } from "./ParamFields.js";
 import { CustomHeaders } from "./CustomHeaders.js";
 import { AdvancedBody } from "./AdvancedBody.js";
@@ -23,7 +22,6 @@ import { Markdown } from "../common/Markdown.js";
 
 export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; replaySeed?: HistoryEntry | null; onReplay?: (entry: HistoryEntry) => void }) {
   const mode = useStore((s) => s.mode);
-  const setMode = useStore((s) => s.setMode);
   const serverChoice = useStore((s) => s.serverChoiceBySpecId[op.specId]);
   const setServerChoice = useStore((s) => s.setServerChoice);
   const specServerDefs = useSpecs().data?.find((s) => s.specId === op.specId)?.serverDefs;
@@ -93,7 +91,7 @@ export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; repl
     // Full-height row; each column scrolls independently so the detail view can scroll while
     // the right rail (snapshots / headers / variables / history) stays in view.
     <div className="flex h-full">
-      <div id="detail-scroll" className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto py-6 pl-6 pr-6">
+      <div id="detail-scroll" className="flex min-h-0 min-w-0 flex-1 flex-col gap-density-body overflow-y-auto py-6 pl-6 pr-6">
         <div className="flex flex-col gap-2">
           {/* Base URL sits directly above the method + path so the two read as one full
               request URL, rather than looking like an action beside Reset. */}
@@ -148,9 +146,7 @@ export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; repl
                 Request body
                 {isFormBody && <span className="ml-2 font-mono text-[10px] normal-case text-content-faint">{op.requestBody.contentType}</span>}
               </span>
-              {/* The Simple/Advanced switch only applies to a JSON body; a form body has one
-                  editor. */}
-              {!isFormBody && <ModeToggle mode={mode} onChange={setMode} />}
+              {/* Simple/Advanced toggle moved to global top bar */}
             </div>
             {isFormBody
               ? <FormBody op={op} parts={formParts} onChange={setFormParts} />

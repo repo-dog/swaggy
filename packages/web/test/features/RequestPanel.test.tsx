@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RequestPanel } from "../../src/features/request/RequestPanel.js";
@@ -151,15 +151,15 @@ describe("RequestPanel", () => {
     await userEvent.type(paramInput(), "abc-123");
     expect(paramInput().value).toBe("abc-123");
 
-    // Toggle to Simple mode by clicking the "simple" button in ModeToggle.
-    await userEvent.click(screen.getByRole("button", { name: /simple/i }));
+    // Toggle to Simple mode via the store (toggle is now in the global top bar, not RequestPanel).
+    act(() => useStore.getState().setMode("simple"));
 
     // The same path param input should still show the typed value — both modes
     // render ParamFields with the same shared inputs object from RequestPanel state.
     expect(paramInput().value).toBe("abc-123");
 
     // Toggle back to Advanced — value must survive the round-trip.
-    await userEvent.click(screen.getByRole("button", { name: /advanced/i }));
+    act(() => useStore.getState().setMode("advanced"));
     expect(paramInput().value).toBe("abc-123");
   });
 

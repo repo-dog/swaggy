@@ -49,6 +49,14 @@
   --method-put: 217 119 6; /* amber-600 */
   --method-patch: 124 58 237; /* violet-600 */
   --method-delete: 220 38 38; /* red-600 */
+
+  /* Density tokens — compact defaults */
+  --density-row-py:       0.25rem;
+  --density-body-gap:     1rem;
+  --density-field-gap:    1rem;
+  --density-fs-primary:   13px;
+  --density-fs-secondary: 11px;
+  --density-fs-sm:        12px;
 }
 
 .dark {
@@ -84,6 +92,15 @@
   --method-put: 251 191 36; /* amber-400 */
   --method-patch: 167 139 250; /* violet-400 */
   --method-delete: 248 113 113; /* red-400 */
+}
+
+[data-density="comfortable"] {
+  --density-row-py:       0.5rem;
+  --density-body-gap:     1.5rem;
+  --density-field-gap:    1.5rem;
+  --density-fs-primary:   14px;
+  --density-fs-secondary: 12px;
+  --density-fs-sm:        13px;
 }
 
 /* Page background behind the app shell (covers overscroll), driven by the token. */

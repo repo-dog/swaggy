@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import { hardResetApp } from "../../lib/reset.js";
-import { ExportProfilesButton } from "../profiles/ExportProfilesButton.js";
-import { ImportProfilesButton } from "../profiles/ImportProfilesButton.js";
+import { useEffect } from "react";
 
 const SHORTCUTS: [string, string][] = [
   ["⌘/Ctrl K", "Search operations"],
@@ -12,16 +9,13 @@ const SHORTCUTS: [string, string][] = [
   ["⌘/Ctrl \\", "Toggle Simple / Advanced"],
   ["⌘/Ctrl H", "Toggle history section"],
   ["⌘/Ctrl ⇧ C", "Copy response as cURL"],
+  ["⌘/Ctrl ,", "Settings"],
   ["?", "Show this help"],
 ];
 
 export function ShortcutsHelp({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [confirmingReset, setConfirmingReset] = useState(false);
   useEffect(() => {
-    if (!open) {
-      setConfirmingReset(false);
-      return;
-    }
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -51,46 +45,6 @@ export function ShortcutsHelp({ open, onClose }: { open: boolean; onClose: () =>
             </div>
           ))}
         </dl>
-
-        <div className="mt-4 border-t border-line pt-3">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-content-muted">Profiles</p>
-          <div className="flex items-center gap-4 text-sm text-content-secondary">
-            <span className="flex items-center gap-2"><ExportProfilesButton /> Download</span>
-            <span className="flex items-center gap-2"><ImportProfilesButton /> Upload</span>
-          </div>
-        </div>
-
-        <div className="mt-4 border-t border-line pt-3">
-          {!confirmingReset ? (
-            <button
-              onClick={() => setConfirmingReset(true)}
-              className="text-xs font-medium text-danger hover:text-danger-strong"
-            >
-              Hard reset…
-            </button>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <p className="text-xs text-content-muted">
-                This permanently clears <span className="font-medium text-content-secondary">all</span> profiles, history,
-                variables, snapshots, and settings, then reloads Swaggy in its initial state.
-              </p>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={hardResetApp}
-                  className="rounded-md bg-danger px-2.5 py-1 text-xs font-medium text-white hover:bg-danger-strong"
-                >
-                  Reset everything
-                </button>
-                <button
-                  onClick={() => setConfirmingReset(false)}
-                  className="text-xs text-content-muted hover:text-content-secondary"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

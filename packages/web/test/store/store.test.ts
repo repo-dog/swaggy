@@ -320,3 +320,27 @@ describe("snapshots", () => {
     expect(list[0].name).toBe(`snap-${SNAPSHOTS_PER_OP + 4}`); // newest kept
   });
 });
+
+describe("sidebarSearch", () => {
+  it("defaults to empty string", () => {
+    expect(s().sidebarSearch).toBe("");
+  });
+
+  it("setSidebarSearch updates and is persisted", () => {
+    s().setSidebarSearch("users");
+    expect(s().sidebarSearch).toBe("users");
+  });
+});
+
+describe("simpleLabels", () => {
+  it("defaults to true", () => {
+    expect(s().simpleLabels).toBe(true);
+  });
+
+  it("setSimpleLabels toggles the value", () => {
+    s().setSimpleLabels(false);
+    expect(s().simpleLabels).toBe(false);
+    s().setSimpleLabels(true);
+    expect(s().simpleLabels).toBe(true);
+  });
+});

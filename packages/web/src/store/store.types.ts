@@ -95,3 +95,5 @@ export type Mode = "simple" | "advanced";
 
 /** "system" follows the OS `prefers-color-scheme`; light/dark are explicit overrides. */
 export type Theme = "light" | "dark" | "system";
+
+export type Density = "compact" | "comfortable";

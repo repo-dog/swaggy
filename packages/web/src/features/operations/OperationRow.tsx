@@ -2,6 +2,8 @@ import type { Operation } from "@swaggy/shared";
 import { GripVertical } from "lucide-react";
 import { cn } from "../../lib/cn.js";
 import { BookmarkButton } from "../profiles/BookmarkButton.js";
+import { useStore } from "../../store/store.js";
+import { splitHighlight } from "../palette/highlight.js";
 
 const METHOD_COLOR: Record<string, string> = {
   GET: "text-method-get",
@@ -11,10 +13,24 @@ const METHOD_COLOR: Record<string, string> = {
   DELETE: "text-method-delete",
 };
 
+function Highlighted({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  return (
+    <>
+      {splitHighlight(text, query).map((part, i) =>
+        part.match
+          ? <mark key={i} className="bg-amber-200 text-content dark:bg-amber-600 dark:text-white">{part.text}</mark>
+          : <span key={i}>{part.text}</span>
+      )}
+    </>
+  );
+}
+
 export function OperationRow({
   op,
   selected,
   onSelect,
+  query,
   draggable = false,
   dragging = false,
   onDragStart,
@@ -24,6 +40,7 @@ export function OperationRow({
   op: Operation;
   selected: boolean;
   onSelect: (id: string) => void;
+  query?: string;
   // Drag-to-reorder support (used only in the Bookmarks section).
   draggable?: boolean;
   dragging?: boolean;
@@ -31,6 +48,14 @@ export function OperationRow({
   onDrop?: () => void;
   onDragEnd?: () => void;
 }) {
+  const mode = useStore((s) => s.mode);
+  const isSimple = mode === "simple";
+  const primaryLabel = isSimple ? (op.summary || op.description || op.path) : op.path;
+  const subtext = isSimple
+    ? (op.summary || op.description ? op.path : null)
+    : (op.summary ?? null);
+  const primaryMono = !isSimple;
+
   return (
     // data-op-id lets the sidebar scroll a freshly-selected row into view.
     <div
@@ -41,9 +66,6 @@ export function OperationRow({
       onDrop={draggable ? (e) => { e.preventDefault(); onDrop?.(); } : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
       className={cn(
-        // Side-specific border colors: a top rule on every row (uniform separators, incl. the
-        // first) and a transparent left accent that turns blue when selected. Using shorthand
-        // border-transparent would override the top color, so keep them split.
         "group flex items-center border-l-2 border-l-transparent border-t border-t-line hover:bg-surface-muted",
         selected && "border-l-accent bg-accent-subtle hover:bg-accent-subtle",
         dragging && "opacity-40",
@@ -60,20 +82,28 @@ export function OperationRow({
       )}
       <button
         onClick={() => onSelect(op.id)}
-        className="flex min-w-0 flex-1 flex-col px-2.5 py-1 text-left"
+        className="flex min-w-0 flex-1 flex-col px-2.5 py-density-row text-left"
       >
         <span className="flex items-center gap-2">
-          <span className={cn("w-12 text-[10px] font-semibold", METHOD_COLOR[op.method] ?? "text-content-muted")}>
+          <span className={cn("w-12 shrink-0 text-[10px] font-semibold", METHOD_COLOR[op.method] ?? "text-content-muted")}>
             {op.method}
           </span>
           <span
             title={op.deprecated ? "Deprecated" : undefined}
-            className={cn("truncate font-mono text-[13px] leading-5 text-content", op.deprecated && "text-content-faint line-through")}
+            className={cn("min-w-0",
+              "truncate text-density-primary leading-5 text-content",
+              primaryMono && "font-mono",
+              op.deprecated && "text-content-faint line-through",
+            )}
           >
-            {op.path}
+            <Highlighted text={primaryLabel} query={query ?? ""} />
           </span>
         </span>
-        {op.summary && <span className="truncate pl-14 text-[11px] leading-4 text-content-muted">{op.summary}</span>}
+        {subtext && (
+          <span className="truncate pl-14 font-mono text-density-secondary leading-4 text-content-muted">
+            <Highlighted text={subtext} query={query ?? ""} />
+          </span>
+        )}
       </button>
       <BookmarkButton operationId={op.id} className="mr-2 shrink-0 p-1" />
     </div>

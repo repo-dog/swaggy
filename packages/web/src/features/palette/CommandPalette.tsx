@@ -38,6 +38,8 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const { data: ops = [] } = useOperations();
   const counts = useStore((s) => s.selectionCountsByOperationId);
+  const mode = useStore((s) => s.mode);
+  const isSimple = mode === "simple";
   const found = useSearch(ops, query);
   // With no query, surface the most-used operations first; while searching, keep the
   // fuzzy relevance order intact.
@@ -89,10 +91,17 @@ export function CommandPalette({
             className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm aria-selected:bg-accent-subtle"
           >
             <span className={cn("w-12 shrink-0 text-xs font-semibold", METHOD_COLOR[op.method] ?? "text-content-muted")}>{op.method}</span>
-            <span className="truncate font-mono text-content"><Highlighted text={op.path} query={query} /></span>
-            {op.summary ? (
-              <span className="truncate text-xs text-content-faint"><Highlighted text={op.summary} query={query} /></span>
-            ) : null}
+            <span className={cn("truncate text-content", !isSimple && "font-mono")}>
+              <Highlighted text={isSimple ? (op.summary || op.description || op.path) : op.path} query={query} />
+            </span>
+            {isSimple
+              ? (op.summary || op.description
+                  ? <span className="truncate font-mono text-xs text-content-faint"><Highlighted text={op.path} query={query} /></span>
+                  : null)
+              : (op.summary
+                  ? <span className="truncate text-xs text-content-faint"><Highlighted text={op.summary} query={query} /></span>
+                  : null)
+            }
           </Command.Item>
         ))}
       </Command.List>

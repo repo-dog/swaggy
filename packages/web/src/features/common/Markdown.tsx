@@ -1,9 +1,12 @@
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { cn } from "../../lib/cn.js";
 
-// Compact renderers tuned for OpenAPI descriptions (short, inline-heavy). react-markdown does
-// NOT render raw HTML unless rehype-raw is added, so this is safe against HTML injection.
+// rehype-raw parses inline HTML (e.g. <br/>, <a href>) found in OpenAPI descriptions.
+// rehype-sanitize strips dangerous tags/attributes (<script>, onclick, etc.) so XSS is
+// still blocked even though raw HTML is now parsed.
 const components: Components = {
   a: (p) => <a {...p} target="_blank" rel="noreferrer" className="text-accent underline underline-offset-2" />,
   code: (p) => <code {...p} className="rounded bg-surface-muted px-1 py-0.5 font-mono text-[0.85em]" />,
@@ -26,7 +29,7 @@ export function Markdown({ children, className }: { children?: string | null; cl
   if (!children || !children.trim()) return null;
   return (
     <div className={cn("space-y-1 leading-snug [&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw, rehypeSanitize]} components={components}>
         {children}
       </ReactMarkdown>
     </div>

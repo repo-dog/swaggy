@@ -48,10 +48,10 @@ export function HistoryPanel({ onReplay }: { onReplay: (entry: HistoryEntry) => 
               title="Open this request with its saved inputs and response"
               className="flex w-full items-baseline gap-2 rounded px-1.5 py-0.5 text-left hover:bg-surface-muted"
             >
-              {method && <span className={cn("w-9 shrink-0 text-[11px] font-semibold", METHOD_COLOR[method] ?? "text-content-muted")}>{method}</span>}
+              {method && <span className={cn("w-9 shrink-0 text-density-secondary font-semibold", METHOD_COLOR[method] ?? "text-content-muted")}>{method}</span>}
               <span className="min-w-0 flex-1 truncate font-mono text-xs text-content">{path}</span>
-              <span className={cn("shrink-0 text-[11px] font-semibold", ok ? "text-success" : "text-danger")}>{e.response.status}</span>
-              <span className="shrink-0 text-[11px] tabular-nums text-content-faint">{timeAgo(e.timestamp)}</span>
+              <span className={cn("shrink-0 text-density-secondary font-semibold", ok ? "text-success" : "text-danger")}>{e.response.status}</span>
+              <span className="shrink-0 text-density-secondary tabular-nums text-content-faint">{timeAgo(e.timestamp)}</span>
             </button>
           );
         })}

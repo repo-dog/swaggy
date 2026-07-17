@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Star, GripVertical, Boxes, Pin, PinOff } from "lucide-react";
 import { useOperations, useSpecs } from "../../hooks/useOperations.js";
+import type { Operation } from "@swaggy/shared";
 import { useStore } from "../../store/store.js";
 import { cn } from "../../lib/cn.js";
 import { reconcileBookmarks } from "./reconcile.js";
@@ -73,7 +74,7 @@ function Section({
         onDrop={draggable ? (e) => { e.preventDefault(); onDrop?.(); } : undefined}
         onDragEnd={draggable ? onDragEnd : undefined}
         className={cn(
-          "flex cursor-pointer select-none list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-bold uppercase tracking-wide",
+          "flex cursor-pointer select-none list-none items-center gap-1.5 rounded-md px-2 py-1.5 text-density-sm font-bold uppercase tracking-wide",
           color.header,
         )}
       >
@@ -108,6 +109,8 @@ export function OperationList({
   const setBookmarkOrder = useStore((s) => s.setBookmarkOrder);
   const sectionOrder = useStore((s) => s.sectionOrder);
   const setSectionOrder = useStore((s) => s.setSectionOrder);
+  const sidebarSearch = useStore((s) => s.sidebarSearch);
+  const setSidebarSearch = useStore((s) => s.setSidebarSearch);
 
   // Which bookmark row / section is currently being dragged (for drop target + dimming).
   const [dragId, setDragId] = useState<string | null>(null);
@@ -133,7 +136,14 @@ export function OperationList({
   // switching specs shows only that spec's bookmarks and operations (one spec at a time).
   const visibleOps = resolvedSpecId ? ops.filter((o) => o.specId === resolvedSpecId) : ops;
 
-  const bookmarked = activeProfile ? reconcileBookmarks(activeProfile.operationIds, visibleOps).available : [];
+  const q = sidebarSearch.trim().toLowerCase();
+  const matchesSearch = (op: Operation) =>
+    !q ||
+    op.path.toLowerCase().includes(q) ||
+    (op.summary?.toLowerCase().includes(q) ?? false) ||
+    (op.description?.toLowerCase().includes(q) ?? false);
+
+  const bookmarked = (activeProfile ? reconcileBookmarks(activeProfile.operationIds, visibleOps).available : []).filter(matchesSearch);
   // Apply the user's saved section order; tags not yet ordered keep their natural (alphabetical) place.
   const groups = applyOrder(groupOperations(visibleOps), (g) => g.tag, sectionOrder);
   const orderedTags = groups.map((g) => g.tag);
@@ -220,6 +230,7 @@ export function OperationList({
           op={op}
           selected={op.id === selectedId}
           onSelect={onSelect}
+          query={sidebarSearch || undefined}
           draggable
           dragging={dragId === op.id}
           onDragStart={() => setDragId(op.id)}
@@ -276,6 +287,16 @@ export function OperationList({
         </div>
       )}
 
+      <div className="shrink-0 border-b border-line px-3 py-2">
+        <input
+          value={sidebarSearch}
+          onChange={(e) => setSidebarSearch(e.target.value)}
+          placeholder="Filter operations…"
+          aria-label="Filter operations"
+          className="w-full rounded-md border border-line bg-surface px-2.5 py-1 text-sm text-content outline-none placeholder:text-content-faint focus:border-line-strong"
+        />
+      </div>
+
       {/* Pinned bookmarks: outside the scroller, capped at 30% of the sidebar with its own
           internal scroll so the rest of the API list stays visible. */}
       {bookmarksPinned && bookmarksNode && (
@@ -289,27 +310,31 @@ export function OperationList({
 
       {!bookmarksPinned && bookmarksNode}
 
-      {groups.map((g, i) => (
-        <Section
-          key={g.tag}
-          title={`${g.tag} (${g.ops.length})`}
-          color={groupColors[i]}
-          open={isOpen(g.tag)}
-          onToggle={(o) => setSectionOpen(g.tag, o)}
-          draggable
-          dragging={dragTag === g.tag}
-          onDragStart={() => setDragTag(g.tag)}
-          onDrop={() => {
-            if (dragTag && dragTag !== g.tag) setSectionOrder(reorderById(orderedTags, dragTag, g.tag));
-            setDragTag(null);
-          }}
-          onDragEnd={() => setDragTag(null)}
-        >
-          {g.ops.map((op) => (
-            <OperationRow key={`${g.tag}-${op.id}`} op={op} selected={op.id === selectedId} onSelect={onSelect} />
-          ))}
-        </Section>
-      ))}
+      {groups.map((g, i) => {
+        const visibleOps = g.ops.filter(matchesSearch);
+        if (visibleOps.length === 0) return null;
+        return (
+          <Section
+            key={g.tag}
+            title={`${g.tag} (${visibleOps.length})`}
+            color={groupColors[i]}
+            open={isOpen(g.tag)}
+            onToggle={(o) => setSectionOpen(g.tag, o)}
+            draggable
+            dragging={dragTag === g.tag}
+            onDragStart={() => setDragTag(g.tag)}
+            onDrop={() => {
+              if (dragTag && dragTag !== g.tag) setSectionOrder(reorderById(orderedTags, dragTag, g.tag));
+              setDragTag(null);
+            }}
+            onDragEnd={() => setDragTag(null)}
+          >
+            {visibleOps.map((op) => (
+              <OperationRow key={`${g.tag}-${op.id}`} op={op} selected={op.id === selectedId} onSelect={onSelect} query={sidebarSearch || undefined} />
+            ))}
+          </Section>
+        );
+      })}
 
       {!isLoading && ops.length === 0 && <p className="p-3 text-sm text-content-faint">No operations.</p>}
       </div>

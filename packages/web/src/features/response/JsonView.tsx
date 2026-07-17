@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Copy, Check, ChevronDown, ChevronRight, Plus } from "lucide-react";
+import { splitHighlight } from "../palette/highlight.js";
 
 /** Copy a value to the clipboard: strings as-is, everything else as pretty JSON. */
 function copyValue(value: unknown) {
@@ -86,6 +87,19 @@ function RowActions({ value, copyLabel, suggestedName, onCapture }: { value: unk
   );
 }
 
+function Highlight({ text, query }: { text: string; query: string }) {
+  if (!query) return <>{text}</>;
+  return (
+    <>
+      {splitHighlight(text, query).map((part, i) =>
+        part.match
+          ? <mark key={i} className="bg-amber-200 text-slate-900 dark:bg-amber-500">{part.text}</mark>
+          : <span key={i}>{part.text}</span>
+      )}
+    </>
+  );
+}
+
 function Node({ label, value, depth, filter, onCapture }: { label?: string; value: unknown; depth: number; filter: string; onCapture?: CaptureFn }) {
   const [open, setOpen] = useState(true);
   const pad = { paddingLeft: `${depth * 14}px` };
@@ -97,18 +111,22 @@ function Node({ label, value, depth, filter, onCapture }: { label?: string; valu
   if (value === null || typeof value !== "object") {
     return (
       <div style={pad} className="flex items-center rounded px-1 hover:bg-white/5">
-        {label !== undefined && <span className="mr-1 text-sky-300">{label}:</span>}
-        <span className={primitiveClass(value)}>{renderPrimitive(value)}</span>
+        {/* Spacer keeps primitive keys aligned with object/array keys (which have a chevron button). */}
+        <span className="mr-0.5 inline-block w-3 shrink-0" aria-hidden />
+        {label !== undefined && <span className="mr-1 text-sky-300"><Highlight text={label} query={filter} />:</span>}
+        <span className={primitiveClass(value)}><Highlight text={renderPrimitive(value)} query={filter} /></span>
         <RowActions value={value} copyLabel={copyLabel} suggestedName={label} onCapture={onCapture} />
       </div>
     );
   }
 
   const isArray = Array.isArray(value);
-  const entries = (isArray
+  // When this node's own label matches the filter, show all children unfiltered.
+  const labelMatches = !!filter && label !== undefined && label.toLowerCase().includes(filter.toLowerCase());
+  const allEntries = isArray
     ? (value as unknown[]).map((v, i) => [String(i), v] as const)
-    : Object.entries(value as Record<string, unknown>)
-  ).filter(([k, v]) => subtreeMatches(k, v, filter));
+    : Object.entries(value as Record<string, unknown>);
+  const entries = allEntries.filter(([k, v]) => !filter || labelMatches || subtreeMatches(k, v, filter));
   const open_ = isArray ? "[" : "{";
   const close_ = isArray ? "]" : "}";
   // Force nodes open while filtering so matches deep in the tree are visible.
@@ -124,7 +142,7 @@ function Node({ label, value, depth, filter, onCapture }: { label?: string; valu
         >
           {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
         </button>
-        {label !== undefined && <span className="mr-1 text-sky-300">{label}:</span>}
+        {label !== undefined && <span className="mr-1 text-sky-300"><Highlight text={label} query={filter} />:</span>}
         <span className="text-slate-500">{expanded ? open_ : `${open_}…${close_}`}</span>
         <span className="ml-1 text-slate-600">{entries.length} {entries.length === 1 ? "item" : "items"}</span>
         <RowActions value={value} copyLabel={copyLabel} suggestedName={label} onCapture={onCapture} />
@@ -132,7 +150,9 @@ function Node({ label, value, depth, filter, onCapture }: { label?: string; valu
       {expanded && (
         <>
           {entries.map(([k, v]) => (
-            <Node key={k} label={k} value={v} depth={depth + 1} filter={filter} onCapture={onCapture} />
+            // When this node's label matched, pass empty filter to children so their
+            // subtreeMatches guard doesn't hide them (they're shown unconditionally).
+            <Node key={k} label={k} value={v} depth={depth + 1} filter={labelMatches ? "" : filter} onCapture={onCapture} />
           ))}
           <div style={pad} className="px-1 text-slate-500">{close_}</div>
         </>
