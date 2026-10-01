@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Star, GripVertical, Boxes, Pin, PinOff } from "lucide-react";
+import { fuzzyMatchIds } from "../../hooks/useSearch.js";
 import { useOperations, useSpecs } from "../../hooks/useOperations.js";
 import type { Operation } from "@swaggy/shared";
 import { useStore } from "../../store/store.js";
@@ -137,8 +138,11 @@ export function OperationList({
   const visibleOps = resolvedSpecId ? ops.filter((o) => o.specId === resolvedSpecId) : ops;
 
   const q = sidebarSearch.trim().toLowerCase();
+  // Substring hits stay authoritative; fuzzy matches add typo-tolerant extras on top.
+  const fuzzyIds = useMemo(() => fuzzyMatchIds(visibleOps, q), [visibleOps, q]);
   const matchesSearch = (op: Operation) =>
     !q ||
+    fuzzyIds.has(op.id) ||
     op.path.toLowerCase().includes(q) ||
     (op.summary?.toLowerCase().includes(q) ?? false) ||
     (op.description?.toLowerCase().includes(q) ?? false);

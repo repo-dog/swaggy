@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
 import type { Operation } from "@swaggy/shared";
 import { useStore } from "../../store/store.js";
 import { useSpecs } from "../../hooks/useOperations.js";
@@ -19,6 +19,12 @@ import type { Snapshot } from "../../store/store.types.js";
 import { SendBar } from "../response/SendBar.js";
 import { ResponsesPanel } from "../response/ResponsesPanel.js";
 import { Markdown } from "../common/Markdown.js";
+import { cn } from "../../lib/cn.js";
+
+const METHOD_COLOR: Record<string, string> = {
+  GET: "text-method-get", POST: "text-method-post", PUT: "text-method-put",
+  PATCH: "text-method-patch", DELETE: "text-danger",
+};
 
 export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; replaySeed?: HistoryEntry | null; onReplay?: (entry: HistoryEntry) => void }) {
   const mode = useStore((s) => s.mode);
@@ -64,6 +70,29 @@ export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; repl
     return () => clearTimeout(t);
   }, [inputs, op.id]);
 
+  const isSimple = mode === "simple";
+  const [pathCopied, setPathCopied] = useState(false);
+  const copyPath = () => {
+    void navigator.clipboard?.writeText(op.path);
+    setPathCopied(true);
+    setTimeout(() => setPathCopied(false), 1200);
+  };
+  const title = isSimple ? (op.summary || op.path) : op.path;
+  const subtext = isSimple ? (op.summary ? op.path : null) : (op.summary ?? null);
+
+  // The copy button sits beside whichever line currently shows the path.
+  const pathIsTitle = !isSimple || !op.summary;
+  const copyButton = (
+    <button
+      onClick={copyPath}
+      title="Copy path"
+      aria-label="Copy path"
+      className="shrink-0 rounded p-1 text-content-faint hover:bg-surface-muted hover:text-content-muted"
+    >
+      {pathCopied ? <Check className="h-4 w-4 text-success" /> : <Copy className="h-4 w-4" />}
+    </button>
+  );
+
   const server = serverChoice ?? inputs.server;
   const patch = (p: Partial<RequestInputs>) => setInputs((prev) => ({ ...prev, ...p }));
 
@@ -98,15 +127,21 @@ export function RequestPanel({ op, replaySeed, onReplay }: { op: Operation; repl
           <ServerSelect servers={op.servers} value={server} onChange={(v) => setServerChoice(op.specId, v)} serverDefs={specServerDefs} />
           <header className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="truncate font-mono text-lg">
-                <span className="mr-2 text-content-muted">{op.method}</span>
-                <span className={op.deprecated ? "text-content-faint line-through" : undefined}>{op.path}</span>
-              </h2>
+              {/* Simple mode leads with the human summary and demotes the path, matching the
+                  operation list; Advanced keeps the path as the title. */}
+              <div className="flex min-w-0 items-center gap-1.5">
+                <h2 className={cn("min-w-0 truncate text-lg", !isSimple && "font-mono")}>
+                  <span className={cn("mr-2 font-mono font-semibold", METHOD_COLOR[op.method] ?? "text-content-muted")}>{op.method}</span>
+                  <span className={op.deprecated ? "text-content-faint line-through" : undefined}>{title}</span>
+                </h2>
+                {pathIsTitle && copyButton}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 {op.deprecated && (
                   <span className="rounded bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning">Deprecated</span>
                 )}
-                {op.summary && <p className="truncate text-sm text-content-muted">{op.summary}</p>}
+                {subtext && <p className={cn("truncate text-sm text-content-muted", isSimple && "font-mono")}>{subtext}</p>}
+                {!pathIsTitle && copyButton}
               </div>
               {op.externalDocs && (
                 <a

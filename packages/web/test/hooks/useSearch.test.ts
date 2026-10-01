@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { searchOperations } from "../../src/hooks/useSearch.js";
+import { searchOperations, fuzzyMatchIds } from "../../src/hooks/useSearch.js";
 import type { Operation } from "@swaggy/shared";
 
 const op = (over: Partial<Operation>): Operation => ({
@@ -25,5 +25,17 @@ describe("searchOperations", () => {
   });
   it("matches on tag", () => {
     expect(searchOperations(ops, "orders").map((o) => o.id)).toContain("orders:createOrder");
+  });
+});
+
+describe("fuzzyMatchIds", () => {
+  it("is empty for an empty query", () => {
+    expect(fuzzyMatchIds(ops, " ").size).toBe(0);
+  });
+  it("tolerates a typo", () => {
+    expect(fuzzyMatchIds(ops, "ordres").has("orders:createOrder")).toBe(true);
+  });
+  it("does not match unrelated text", () => {
+    expect(fuzzyMatchIds(ops, "zzzzqq").size).toBe(0);
   });
 });
