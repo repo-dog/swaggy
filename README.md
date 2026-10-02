@@ -16,6 +16,8 @@
 
 Swaggy points at your OpenAPI/Swagger specs (by URL or file) and turns them into a fast UI for **trying real requests** — with the ergonomics of an API client (profiles, variables, history, snapshots) rather than a static docs page. It's built for *interacting with* and *exploring* APIs, not writing test assertions.
 
+<img width="853" height="428" alt="output" src="https://github.com/user-attachments/assets/bf738ce9-964c-4261-b4ad-fc5d20d998b2" />
+
 ## Features
 
 - **Any spec version** — Swagger 2.0, OpenAPI 3.0.x, and 3.1, loaded from a URL or a local file, multiple specs at once.
